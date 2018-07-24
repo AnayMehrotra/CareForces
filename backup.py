@@ -8,8 +8,14 @@ from pathlib import Path
 def getCode(Id,contest):
     Id=str(Id)
     contest=str(contest)
-    solutionPage = requests.get('http://codeforces.com/contest/'+contest+'/submission/'+Id)
-    tree = html.fromstring(solutionPage.text)
+    
+    for i in range(0,5):
+        solutionPage = requests.get('http://codeforces.com/contest/'+contest+'/submission/'+Id)
+        tree = html.fromstring(solutionPage.text)
+        if len( tree.xpath('//*[@id="pageContent"]/div[3]/pre/text()')) == 0:
+            continue
+        break
+
     if len( tree.xpath('//*[@id="pageContent"]/div[3]/pre/text()')) == 0:
         return -1
     return tree.xpath('//*[@id="pageContent"]/div[3]/pre/text()')[0];
@@ -68,8 +74,10 @@ for user in sys.argv:
         File=user+"/"+contest+"_"+index
         if Path(File+extn).is_file() and not Same(File+extn,code):
             j=2
-            while Path(File+"_"+str(j)+extn).is_file():j+=1
-            makeFile(File+"_"+str(j)+extn,code)
+            while Path(File+"_"+str(j)+extn).is_file() and not Same(File+"_"+str(j)+extn,code):j+=1
+            if Path(File+"_"+str(j)+extn).is_file():
+                print("Solution:"+File+"_"+str(j)+extn+" already exists, skipped.")
+            else: makeFile(File+"_"+str(j)+extn,code)
         elif Path(File+extn).is_file() and Same(File+extn,code):
             File=File.split('/',1)[-1]
             print("Solution:"+File+extn+" already exists, skipped.")
